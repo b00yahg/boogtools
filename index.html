@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booyahg's Goblin D&D Toolkit</title>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Roboto&display=swap" rel="stylesheet">
+    <style> 
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e6d8b5;
+            color: #2a3f2b;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f0e6c8;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        h1 {
+            font-family: 'MedievalSharp', cursive;
+            text-align: center;
+            color: #2a3f2b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .tab {
+            background-color: #3c5a3e;
+            color: #f9f3e3;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px 5px 0 0;
+            transition: background-color 0.3s;
+            font-family: 'MedievalSharp', cursive;
+        }
+        .tab:hover, .tab.active {
+            background-color: #5c8a5f;
+        }
+        .tool {
+            display: none;
+            background-color: #f9f3e3;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            border: 2px solid #3c5a3e;
+        }
+        .tool.active {
+            display: block;
+        }
+        label, select, input, button {
+            display: block;
+            width: 100%;
+            margin-bottom: 10px;
+            font-family: inherit;
+        }
+        select, input, button {
+            padding: 8px;
+            background-color: #f0e6d2;
+            color: #2a3f2b;
+            border: 1px solid #5c8a5f;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #5c8a5f;
+            color: #f9f3e3;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-family: 'MedievalSharp', cursive;
+        }
+        button:hover {
+            background-color: #3c5a3e;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0e6d2;
+            border-radius: 5px;
+            border: 1px solid #3c5a3e;
+        }
+        .description {
+            font-style: italic;
+            margin-bottom: 15px;
+            border-left: 3px solid #5c8a5f;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Booyahg's Goblin D&D Toolkit</h1>
+        <div class="tabs">
+   		<button class="tab active" onclick="openTool(event, 'dc')">DC Calculator</button>
+    		<button class="tab" onclick="openTool(event, 'social')">Social</button>
+    		<button class="tab" onclick="openTool(event, 'tracking')">Tracking</button>
+	</div>
+
+        <div id="tracking" class="tool active">
+            <div class="description">Calculate the Difficulty Class for tracking creatures based on surface type, time passed, and other factors.</div>
+            <label for="surface">Ground Surface:</label>
+            <select id="surface">
+                <option value="10">Soft surface such as snow</option>
+                <option value="15">Dirt or grass</option>
+                <option value="20">Bare stone</option>
+            </select>
+
+            <label for="days">Days Since Creature Passed:</label>
+            <input type="number" id="days" min="0" value="0">
+
+            <label for="trail">Creature Left a Trail (e.g., blood):</label>
+            <select id="trail">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+
+            <button onclick="calculateTrackingDC()">Calculate Tracking DC</button>
+
+            <div id="trackingResult"></div>
+        </div>
+
+        <div id="social" class="tool">
+            <div class="description">Resolve social interactions based on NPC attitude, Charisma check results, and risk levels.</div>
+            <label for="attitude">NPC Attitude:</label>
+            <select id="attitude">
+                <option value="friendly">Friendly</option>
+                <option value="indifferent">Indifferent</option>
+                <option value="hostile">Hostile</option>
+            </select>
+
+            <label for="check-result">Charisma Check Result:</label>
+            <input type="number" id="check-result" min="1" max="30" placeholder="Enter check result (1-30)">
+
+            <label for="risk">Level of Risk/Sacrifice:</label>
+            <select id="risk">
+                <option value="none">No Risk or Sacrifice</option>
+                <option value="minor">Minor Risk or Sacrifice</option>
+                <option value="significant">Significant Risk or Sacrifice</option>
+            </select>
+
+            <button onclick="resolveSocialInteraction()">Resolve Interaction</button>
+
+            <div id="socialResult"></div>
+        </div>
+
+        <div id="dc" class="tool">
+            <div class="description">Calculate Difficulty Class and success chance for various D&D activities.</div>
+            <label for="activity">Activity:</label>
+            <select id="activity">
+                <option value="Climbing">Climbing</option>
+                <option value="Jumping">Jumping</option>
+                <option value="Swimming">Swimming</option>
+                <option value="Feats of strength">Feats of strength</option>
+                <option value="Balancing">Balancing</option>
+                <option value="Performing stunts">Performing stunts</option>
+                <option value="Maintaining footing">Maintaining footing in tricky situations</option>
+                <option value="Picking pockets">Picking pockets</option>
+                <option value="Concealing objects">Concealing objects</option>
+                <option value="Manual trickery">Manual trickery</option>
+                <option value="Hiding">Hiding</option>
+                <option value="Moving quietly">Moving quietly</option>
+                <option value="Avoiding detection">Avoiding detection</option>
+                <option value="Recalling magical lore">Recalling magical lore</option>
+                <option value="Identifying magical effects">Identifying magical effects</option>
+                <option value="Recalling historical events">Recalling historical events</option>
+                <option value="Identifying historical figures">Identifying important figures from the past</option>
+                <option value="Finding clues">Finding clues</option>
+                <option value="Making deductions">Making deductions</option>
+                <option value="Analyzing details">Analyzing details</option>
+                <option value="Identifying flora/fauna">Identifying flora/fauna</option>
+                <option value="Understanding environments">Understanding environments</option>
+                <option value="Recalling religious lore">Recalling religious lore</option>
+                <option value="Identifying religious symbols">Identifying religious symbols and practices</option>
+                <option value="Calming animals">Calming animals</option>
+                <option value="Understanding animal behavior">Understanding animal behavior</option>
+                <option value="Controlling mounts">Controlling mounts</option>
+                <option value="Reading body language">Reading body language</option>
+                <option value="Detecting lies">Detecting lies</option>
+                <option value="Understanding intentions">Understanding intentions</option>
+                <option value="Treating wounds">Treating wounds</option>
+                <option value="Diagnosing illnesses">Diagnosing illnesses</option>
+                <option value="Stabilizing the dying">Stabilizing the dying</option>
+                <option value="Spotting hidden objects">Spotting hidden objects</option>
+                <option value="Noticing details">Noticing details</option>
+                <option value="Using senses to gather information">Using senses to gather information</option>
+                <option value="Tracking">Tracking</option>
+                <option value="Foraging">Foraging</option>
+                <option value="Navigating wilderness">Navigating wilderness</option>
+                <option value="Predicting weather">Predicting weather</option>
+                <option value="Lying convincingly">Lying convincingly</option>
+                <option value="Misleading others">Misleading others</option>
+                <option value="Hiding the truth">Hiding the truth</option>
+                <option value="Threatening others">Threatening others</option>
+                <option value="Displaying hostility">Displaying hostility</option>
+                <option value="Coercing information">Coercing information</option>
+                <option value="Entertaining audiences">Entertaining audiences through various artistic means</option>
+                <option value="Influencing others">Influencing others through social interaction</option>
+                <option value="Negotiating">Negotiating</option>
+                <option value="Diplomacy">Diplomacy</option>
+            </select>
+            <label for="difficulty">Difficulty Level:</label>
+            <select id="difficulty">
+                <option value="5">Very Easy</option>
+                <option value="10">Easy</option>
+                <option value="15" selected>Moderate</option>
+                <option value="20">Hard</option>
+                <option value="25">Very Hard</option>
+                <option value="30">Nearly Impossible</option>
+            </select>
+            <label for="modifier">Player's Modifier:</label>
+            <input type="number" id="modifier" placeholder="Enter modifier" value="0">
+            <button onclick="calculateDC()">Calculate</button>
+            <div id="dcResult"></div>
+        </div>
+    </div>
+
+    <script>
+        function openTool(evt, toolName) {
+            var i, tools, tabs;
+            tools = document.getElementsByClassName("tool");
+            for (i = 0; i < tools.length; i++) {
+                tools[i].style.display = "none";
+            }
+            tabs = document.getElementsByClassName("tab");
+            for (i = 0; i < tabs.length; i++) {
+                tabs[i].className = tabs[i].className.replace(" active", "");
+            }
+            document.getElementById(toolName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function calculateTrackingDC() {
+            const baseDC = parseInt(document.getElementById('surface').value);
+            const days = parseInt(document.getElementById('days').value);
+            const trail = parseInt(document.getElementById('trail').value);
+
+            let dc = baseDC + (days * 5);
+            if (trail === 1) {
+                dc -= 5;
+            }
+
+            dc = Math.max(dc, 5);
+
+            const result = document.getElementById('trackingResult');
+            result.innerHTML = `<strong>Tracking DC:</strong> ${dc}`;
+
+            let difficulty = "Very Easy";
+            if (dc > 30) difficulty = "Nearly Impossible";
+            else if (dc > 25) difficulty = "Very Hard";
+            else if (dc > 20) difficulty = "Hard";
+            else if (dc > 15) difficulty = "Moderate";
+            else if (dc > 10) difficulty = "Easy";
+
+            result.innerHTML += `<br><strong>Difficulty:</strong> ${difficulty}`;
+
+            let explanation = `<br><br><strong>Explanation:</strong><br>`;
+            explanation += `Base DC for the surface: ${baseDC}<br>`;
+            if (days > 0) explanation += `Added ${days * 5} for ${days} day(s) passed<br>`;
+            if (trail === 1) explanation += `Subtracted 5 for visible trail<br>`;
+            result.innerHTML += explanation;
+        }
+
+        function resolveSocialInteraction() {
+            const attitude = document.getElementById('attitude').value;
+            const checkResult = parseInt(document.getElementById('check-result').value);
+            const risk = document.getElementById('risk').value;
+            const result = document.getElementById('socialResult');
+
+            if (isNaN(checkResult) || checkResult < 1 || checkResult > 30) {
+                result.innerHTML = "Please enter a valid check result between 1 and 30.";
+                return;
+            }
+
+            let outcome;
+
+            if (attitude === 'friendly') {
+                if (risk === 'none' && checkResult >= 0) outcome = "The creature helps.";
+                else if (risk === 'minor' && checkResult >= 10) outcome = "The creature helps.";
+                else if (risk === 'significant' && checkResult >= 20) outcome = "The creature helps.";
+                else outcome = "The creature doesn't help but does no harm.";
+            } else if (attitude === 'indifferent') {
+                if (risk === 'none' && checkResult >= 10) outcome = "The creature helps.";
+                else if (risk === 'minor' && checkResult >= 20) outcome = "The creature helps.";
+                else if (checkResult >= 0) outcome = "The creature doesn't help but does no harm.";
+                else outcome = "The creature harms.";
+            } else if (attitude === 'hostile') {
+                if (risk === 'none' && checkResult >= 20) outcome = "The creature helps.";
+                else if (checkResult >= 10) outcome = "The creature doesn't help but does no harm.";
+                else outcome = "The creature harms.";
+            }
+
+            result.innerHTML = `<strong>Interaction Outcome:</strong><br>${outcome}`;
+        }
+
+        const activityToSkill = {
+            "Climbing": "Athletics", "Jumping": "Athletics", "Swimming": "Athletics", "Feats of strength": "Athletics",
+            "Balancing": "Acrobatics", "Performing stunts": "Acrobatics", "Maintaining footing": "Acrobatics",
+            "Picking pockets": "Sleight of Hand", "Concealing objects": "Sleight of Hand", "Manual trickery": "Sleight of Hand",
+            "Hiding": "Stealth", "Moving quietly": "Stealth", "Avoiding detection": "Stealth",
+            "Recalling magical lore": "Arcana", "Identifying magical effects": "Arcana",
+            "Recalling historical events": "History", "Identifying historical figures": "History",
+            "Finding clues": "Investigation", "Making deductions": "Investigation", "Analyzing details": "Investigation",
+            "Identifying flora/fauna": "Nature", "Understanding environments": "Nature",
+            "Recalling religious lore": "Religion", "Identifying religious symbols": "Religion",
+            "Calming animals": "Animal Handling", "Understanding animal behavior": "Animal Handling", "Controlling mounts": "Animal Handling",
+            "Reading body language": "Insight", "Detecting lies": "Insight", "Understanding intentions": "Insight",
+            "Treating wounds": "Medicine", "Diagnosing illnesses": "Medicine", "Stabilizing the dying": "Medicine",
+            "Spotting hidden objects": "Perception", "Noticing details": "Perception", "Using senses to gather information": "Perception",
+            "Tracking": "Survival", "Foraging": "Survival", "Navigating wilderness": "Survival", "Predicting weather": "Survival",
+            "Lying convincingly": "Deception", "Misleading others": "Deception", "Hiding the truth": "Deception",
+            "Threatening others": "Intimidation", "Displaying hostility": "Intimidation", "Coercing information": "Intimidation",
+            "Entertaining audiences": "Performance",
+            "Influencing others": "Persuasion", "Negotiating": "Persuasion", "Diplomacy": "Persuasion"
+        };
+
+        function calculateDC() {
+            const activity = document.getElementById('activity').value;
+            const difficulty = parseInt(document.getElementById('difficulty').value);
+            const modifier = parseInt(document.getElementById('modifier').value);
+            const result = document.getElementById('dcResult');
+
+            const skillCheck = activityToSkill[activity];
+            const successChance = Math.min(Math.max(((21 + modifier - difficulty) / 20) * 100, 5), 95);
+
+            result.innerHTML = `
+                <strong>Activity:</strong> ${activity}<br>
+                <strong>Skill Check:</strong> ${skillCheck}<br>
+                <strong>Recommended DC:</strong> ${difficulty}<br>
+                <strong>Success Chance:</strong> ${successChance.toFixed(2)}%
+            `;
+        }
+    </script>
+</body>
+</html>
