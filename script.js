@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', function(event) {
-            const toolNames = ['tracking', 'social', 'dc', 'mystical'];
+            const toolNames = ['dc', 'social', 'tracking', 'mystical'];
             const toolName = toolNames[index];
             openTool(event, toolName);
         });
