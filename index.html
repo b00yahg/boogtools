@@ -17,27 +17,25 @@
             <button class="tab">Object Destruction Calculator</button>
         </div>
 
-        <div id="tracking" class="tool">
-            <div class="description">Calculate the Difficulty Class for tracking creatures based on surface type, time passed, and other factors.</div>
-            <label for="surface">Ground Surface:</label>
-            <select id="surface">
-                <option value="10">Soft surface such as snow</option>
-                <option value="15">Dirt or grass</option>
-                <option value="20">Bare stone</option>
+         <div id="dc" class="tool">
+            <div class="description">Calculate Difficulty Class and success chance for various D&D activities.</div>
+            <label for="activity">Activity:</label>
+            <select id="activity">
+                <!-- Options remain the same as in your original code -->
             </select>
-
-            <label for="days">Days Since Creature Passed:</label>
-            <input type="number" id="days" min="0" value="0">
-
-            <label for="trail">Creature Left a Trail (e.g., blood):</label>
-            <select id="trail">
-                <option value="0">No</option>
-                <option value="1">Yes</option>
+            <label for="difficulty">Difficulty Level:</label>
+            <select id="difficulty">
+                <option value="5">Very Easy</option>
+                <option value="10">Easy</option>
+                <option value="15" selected>Moderate</option>
+                <option value="20">Hard</option>
+                <option value="25">Very Hard</option>
+                <option value="30">Nearly Impossible</option>
             </select>
-
-            <button onclick="calculateTrackingDC()">Calculate Tracking DC</button>
-
-            <div id="trackingResult"></div>
+            <label for="modifier">Player's Modifier:</label>
+            <input type="number" id="modifier" placeholder="Enter modifier" value="0">
+            <button onclick="calculateDC()">Calculate</button>
+            <div id="dcResult"></div>
         </div>
 
         <div id="social" class="tool">
@@ -63,26 +61,28 @@
 
             <div id="socialResult"></div>
         </div>
+        
+        <div id="tracking" class="tool">
+            <div class="description">Calculate the Difficulty Class for tracking creatures based on surface type, time passed, and other factors.</div>
+            <label for="surface">Ground Surface:</label>
+            <select id="surface">
+                <option value="10">Soft surface such as snow</option>
+                <option value="15">Dirt or grass</option>
+                <option value="20">Bare stone</option>
+            </select>
 
-        <div id="dc" class="tool">
-            <div class="description">Calculate Difficulty Class and success chance for various D&D activities.</div>
-            <label for="activity">Activity:</label>
-            <select id="activity">
-                <!-- Options remain the same as in your original code -->
+            <label for="days">Days Since Creature Passed:</label>
+            <input type="number" id="days" min="0" value="0">
+
+            <label for="trail">Creature Left a Trail (e.g., blood):</label>
+            <select id="trail">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
             </select>
-            <label for="difficulty">Difficulty Level:</label>
-            <select id="difficulty">
-                <option value="5">Very Easy</option>
-                <option value="10">Easy</option>
-                <option value="15" selected>Moderate</option>
-                <option value="20">Hard</option>
-                <option value="25">Very Hard</option>
-                <option value="30">Nearly Impossible</option>
-            </select>
-            <label for="modifier">Player's Modifier:</label>
-            <input type="number" id="modifier" placeholder="Enter modifier" value="0">
-            <button onclick="calculateDC()">Calculate</button>
-            <div id="dcResult"></div>
+
+            <button onclick="calculateTrackingDC()">Calculate Tracking DC</button>
+
+            <div id="trackingResult"></div>
         </div>
 
         <div id="mystical" class="tool">
