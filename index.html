@@ -119,10 +119,10 @@
     <div class="container">
         <h1>Booyahg's Goblin D&D Toolkit</h1>
 	<div class="tabs">
-	    <button class="tab active" onclick="openTool(event, 'dc')">DC Calculator</button>
-	    <button class="tab" onclick="openTool(event, 'social')">Social</button>
-	    <button class="tab" onclick="openTool(event, 'tracking')">Tracking</button>
-	    <button class="tab" onclick="openTool(event, 'mystical')">Object Distruction Calculator</button>
+	    <button class="tab active">DC Calculator</button>
+	    <button class="tab">Social</button>
+	    <button class="tab">Tracking</button>
+	    <button class="tab">Object Distruction Calculator</button>
 	</div>
 
         <div id="tracking" class="tool active">
@@ -253,19 +253,19 @@
 	
 
     <script>
-        function openTool(evt, toolName) {
-            var i, tools, tabs;
-            tools = document.getElementsByClassName("tool");
-            for (i = 0; i < tools.length; i++) {
-                tools[i].style.display = "none";
-            }
-            tabs = document.getElementsByClassName("tab");
-            for (i = 0; i < tabs.length; i++) {
-                tabs[i].className = tabs[i].className.replace(" active", "");
-            }
-            document.getElementById(toolName).style.display = "block";
-            evt.currentTarget.className += " active";
-        }
+	function openTool(evt, toolName) {
+	    var i, tools, tabs;
+	    tools = document.getElementsByClassName("tool");
+	    for (i = 0; i < tools.length; i++) {
+	        tools[i].style.display = "none";
+	    }
+	    tabs = document.getElementsByClassName("tab");
+	    for (i = 0; i < tabs.length; i++) {
+	        tabs[i].className = tabs[i].className.replace(" active", "");
+	    }
+	    document.getElementById(toolName).style.display = "block";
+	    evt.currentTarget.className += " active";
+	}
 
         function calculateTrackingDC() {
             const baseDC = parseInt(document.getElementById('surface').value);
@@ -684,6 +684,30 @@
 	});
 	
 	console.log("Script loaded");
+ 
+	 document.addEventListener("DOMContentLoaded", function() {
+	    console.log("DOM fully loaded");
+	    
+	    // Get all tab buttons
+	    const tabs = document.querySelectorAll('.tab');
+	    
+	    // Add click event listener to each tab
+	    tabs.forEach((tab, index) => {
+	        tab.addEventListener('click', function(event) {
+	            // Get the tool name based on the index
+	            const toolNames = ['dc', 'social', 'tracking', 'mystical'];
+	            const toolName = toolNames[index];
+	            
+	            // Call the openTool function
+	            openTool(event, toolName);
+	        });
+	    });
+	
+	    // Set the first tab as active by default
+	    openTool({ currentTarget: tabs[0] }, 'dc');
+	
+	    document.getElementById("analyzeButton").addEventListener("click", calculateObject);
+	});
     </script>
 </body>
 </html>
