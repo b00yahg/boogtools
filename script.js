@@ -265,26 +265,27 @@ function calculateTrackingDC() {
         dc -= 5;
     }
 
-    dc = Math.max(dc, 5);
+     dc = Math.max(dc, 5);
 
-    const result = document.getElementById('trackingResult');
-    result.innerHTML = `<strong>Tracking DC:</strong> ${dc}`;
+      const result = document.getElementById('trackingResult');
+      result.innerHTML = `<strong>Tracking DC:</strong> ${dc}`;
 
-    let difficulty = "Very Easy";
-    if (dc > 30) difficulty = "Nearly Impossible";
-    else if (dc > 25) difficulty = "Very Hard";
-    else if (dc > 20) difficulty = "Hard";
-    else if (dc > 15) difficulty = "Moderate";
-    else if (dc > 10) difficulty = "Easy";
+      let difficulty = "Very Easy";
+      if (dc > 30) difficulty = "Nearly Impossible";
+      else if (dc > 25) difficulty = "Very Hard";
+      else if (dc > 20) difficulty = "Hard";
+      else if (dc > 15) difficulty = "Moderate";
+      else if (dc > 10) difficulty = "Easy";
 
-    result.innerHTML += `<br><strong>Difficulty:</strong> ${difficulty}`;
+      result.innerHTML += `<br><strong>Difficulty:</strong> ${difficulty}`;
 
-    let explanation = `<br><br><strong>Explanation:</strong><br>`;
-    explanation += `Base DC for the surface: ${baseDC}<br>`;
-    if (days > 0) explanation += `Added ${days * 5} for ${days} day(s) passed<br>`;
-    if (trail === 1) explanation += `Subtracted 5 for visible trail<br>`;
-    result.innerHTML += explanation;
-}
+      let explanation = `<br><br><strong>Explanation:</strong><br>`;
+     explanation += `Base DC for the surface: ${baseDC}<br>`;
+     if (days > 0) explanation += `Added ${days * 5} for ${days} day(s) passed<br>`;
+     if (trail === 1) explanation += `Subtracted 5 for visible trail<br>`;
+     result.innerHTML += explanation;
+ }
+
 
 function resolveSocialInteraction() {
     const attitude = document.getElementById('attitude').value;
