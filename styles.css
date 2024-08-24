@@ -1,0 +1,114 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e6d8b5;
+    color: #2a3f2b;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #f0e6c8;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+h1 {
+    font-family: 'MedievalSharp', cursive;
+    text-align: center;
+    color: #2a3f2b;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.tab {
+    background-color: #3c5a3e;
+    color: #f9f3e3;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px 5px 0 0;
+    transition: background-color 0.3s;
+    font-family: 'MedievalSharp', cursive;
+}
+
+.tab:hover, .tab.active {
+    background-color: #5c8a5f;
+}
+
+.tool {
+    display: none;
+    background-color: #f9f3e3;
+    padding: 20px;
+    border-radius: 0 0 5px 5px;
+    border: 2px solid #3c5a3e;
+}
+
+.tool.active {
+    display: block;
+}
+
+label, select, input, button {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    font-family: inherit;
+}
+
+select, input, button {
+    padding: 8px;
+    background-color: #f0e6d2;
+    color: #2a3f2b;
+    border: 1px solid #5c8a5f;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #5c8a5f;
+    color: #f9f3e3;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    font-family: 'MedievalSharp', cursive;
+}
+
+button:hover {
+    background-color: #3c5a3e;
+}
+
+#dcResult, #trackingResult, #socialResult, #mysticalResult {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f0e6d2;
+    border-radius: 5px;
+    border: 1px solid #3c5a3e;
+}
+
+.description {
+    font-style: italic;
+    margin-bottom: 15px;
+    border-left: 3px solid #5c8a5f;
+    padding-left: 10px;
+}
+
+.input-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#objectInput {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+#analyzeButton {
+    width: auto;
+}
