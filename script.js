@@ -551,16 +551,15 @@ function checkFlankingLine(flanker1, flanker2, tokenGroup) {
     }
 
     // Check diagonal flanking
-    if ((flanker1Row < tokenEdges.top && flanker1Col < tokenEdges.left && flanker2Row > tokenEdges.bottom && flanker2Col > tokenEdges.right) ||
-        (flanker2Row < tokenEdges.top && flanker2Col < tokenEdges.left && flanker1Row > tokenEdges.bottom && flanker1Col > tokenEdges.right) ||
-        (flanker1Row < tokenEdges.top && flanker1Col > tokenEdges.right && flanker2Row > tokenEdges.bottom && flanker2Col < tokenEdges.left) ||
-        (flanker2Row < tokenEdges.top && flanker2Col > tokenEdges.right && flanker1Row > tokenEdges.bottom && flanker1Col < tokenEdges.left)) {
+    if ((flanker1Row <= tokenEdges.top && flanker1Col <= tokenEdges.left && flanker2Row >= tokenEdges.bottom && flanker2Col >= tokenEdges.right) ||
+        (flanker2Row <= tokenEdges.top && flanker2Col <= tokenEdges.left && flanker1Row >= tokenEdges.bottom && flanker1Col >= tokenEdges.right) ||
+        (flanker1Row <= tokenEdges.top && flanker1Col >= tokenEdges.right && flanker2Row >= tokenEdges.bottom && flanker2Col <= tokenEdges.left) ||
+        (flanker2Row <= tokenEdges.top && flanker2Col >= tokenEdges.right && flanker1Row >= tokenEdges.bottom && flanker1Col <= tokenEdges.left)) {
         return true;
     }
 
     return false;
 }
-
 function clearGrid() {
     grid.querySelectorAll('.cell').forEach(cell => {
         cell.textContent = '';
