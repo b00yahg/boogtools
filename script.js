@@ -411,22 +411,23 @@ function calculateObject() {
 function showResult(message) {
     document.getElementById("mysticalResult").innerHTML = message;
 }
+let placementMode = null;
 const grid = document.getElementById('grid');
 const placeAllyBtn = document.getElementById('placeAlly');
 const placeEnemyBtn = document.getElementById('placeEnemy');
 const tokenSizeSelect = document.getElementById('tokenSize');
 const clearGridBtn = document.getElementById('clearGrid');
-let placementMode = null;
 
-// Generate grid
-for (let i = 0; i < 100; i++) {
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.dataset.index = i;
-    grid.appendChild(cell);
+function initializeGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        grid.appendChild(cell);
+    }
 }
 
-// Token placement logic
 function placeToken(event) {
     if (!placementMode) return;
 
@@ -450,7 +451,6 @@ function placeToken(event) {
                     const targetCell = grid.children[r * 10 + c];
                     targetCell.textContent = token;
                     targetCell.classList.add(placementMode);
-                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}`;
                 }
             }
         } else if (size === 'huge' && col < 8 && row < 8) {
@@ -459,7 +459,6 @@ function placeToken(event) {
                     const targetCell = grid.children[r * 10 + c];
                     targetCell.textContent = token;
                     targetCell.classList.add(placementMode);
-                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}`;
                 }
             }
         }
@@ -573,7 +572,7 @@ function clearGrid() {
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
 placeEnemyBtn.addEventListener('click', () => placementMode = 'enemy');
 grid.addEventListener('click', placeToken);
-clearGridBtn.addEventListener('click', clearGrid);
+clearGridBtn.addEventListener('click', initializeGrid);
 
 document.addEventListener("DOMContentLoaded", function() {
     const tabs = document.querySelectorAll('.tab');
@@ -583,6 +582,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const toolNames = ['dc', 'social', 'tracking', 'mystical', 'flanking'];
             const toolName = toolNames[index];
             openTool(event, toolName);
+            initializeGrid();
         });
     });
 
