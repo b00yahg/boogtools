@@ -116,7 +116,7 @@ button:hover {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
     gap: 2px;
-    margin-bottom: 20px;
+    margin: 0 auto 20px; /* Center horizontally and add bottom margin */
     width: 100%;
     max-width: 500px;
 }
@@ -134,17 +134,20 @@ button:hover {
 
 .controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     margin-bottom: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrapping */
 }
 
 .controls button, .controls select {
-    flex: 1 1 auto;
-    margin: 5px;
+    flex: 0 1 auto; /* Allow shrinking but not growing */
+    margin: 0 5px;
     min-width: 100px;
 }
 
 .ally { background-color: #5c8a5f; color: white; }
 .enemy { background-color: #8a5c5c; color: white; }
-.flanked { background-color: #f0e6d2; }
+.flanked {
+    box-shadow: 0 0 0 3px yellow;
+    z-index: 1; /* Ensure the border appears above other cells */
+}
