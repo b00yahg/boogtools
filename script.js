@@ -253,6 +253,9 @@ function openTool(evt, toolName) {
     }
     document.getElementById(toolName).style.display = "block";
     evt.currentTarget.className += " active";
+    if (toolName === 'flanking') {
+        initializeGrid();
+    }
 }
 
 function calculateTrackingDC() {
@@ -408,13 +411,176 @@ function calculateObject() {
 function showResult(message) {
     document.getElementById("mysticalResult").innerHTML = message;
 }
+const grid = document.getElementById('grid');
+const placeAllyBtn = document.getElementById('placeAlly');
+const placeEnemyBtn = document.getElementById('placeEnemy');
+const tokenSizeSelect = document.getElementById('tokenSize');
+const clearGridBtn = document.getElementById('clearGrid');
+let placementMode = null;
+
+// Generate grid
+for (let i = 0; i < 100; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    grid.appendChild(cell);
+}
+
+// Token placement logic
+function placeToken(event) {
+    if (!placementMode) return;
+
+    const cell = event.target;
+    if (!cell.classList.contains('cell')) return;
+
+    const size = tokenSizeSelect.value;
+    const token = placementMode === 'ally' ? 'A' : 'E';
+
+    if (size === 'medium') {
+        cell.textContent = token;
+        cell.classList.add(placementMode);
+    } else {
+        const index = parseInt(cell.dataset.index);
+        const row = Math.floor(index / 10);
+        const col = index % 10;
+
+        if (size === 'large' && col < 9 && row < 9) {
+            for (let r = row; r < row + 2; r++) {
+                for (let c = col; c < col + 2; c++) {
+                    const targetCell = grid.children[r * 10 + c];
+                    targetCell.textContent = token;
+                    targetCell.classList.add(placementMode);
+                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}`;
+                }
+            }
+        } else if (size === 'huge' && col < 8 && row < 8) {
+            for (let r = row; r < row + 3; r++) {
+                for (let c = col; c < col + 3; c++) {
+                    const targetCell = grid.children[r * 10 + c];
+                    targetCell.textContent = token;
+                    targetCell.classList.add(placementMode);
+                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}`;
+                }
+            }
+        }
+    }
+
+    placementMode = null;
+    calculateFlanking();
+}
+
+function calculateFlanking() {
+    const allTokens = Array.from(grid.getElementsByClassName('ally')).concat(Array.from(grid.getElementsByClassName('enemy')));
+    
+    // Clear previous flanking
+    grid.querySelectorAll('.flanked').forEach(cell => cell.classList.remove('flanked'));
+
+    // Group tokens by their groupId
+    const tokenGroups = allTokens.reduce((groups, token) => {
+        const groupId = token.dataset.groupId || token.dataset.index;
+        if (!groups[groupId]) {
+            groups[groupId] = [];
+        }
+        groups[groupId].push(token);
+        return groups;
+    }, {});
+
+    Object.values(tokenGroups).forEach(tokenGroup => {
+        const tokenType = tokenGroup[0].classList.contains('ally') ? 'enemy' : 'ally';
+        const potentialFlankers = allTokens.filter(t => t.classList.contains(tokenType));
+
+        const adjacentFlankers = potentialFlankers.filter(flanker => 
+            tokenGroup.some(token => isAdjacent(token, flanker))
+        );
+
+        // Only proceed if there are at least two adjacent flankers
+        if (adjacentFlankers.length >= 2) {
+            let isFlanked = false;
+            for (let i = 0; i < adjacentFlankers.length - 1; i++) {
+                for (let j = i + 1; j < adjacentFlankers.length; j++) {
+                    const flanker1 = adjacentFlankers[i];
+                    const flanker2 = adjacentFlankers[j];
+
+                    if (checkFlankingLine(flanker1, flanker2, tokenGroup)) {
+                        isFlanked = true;
+                        break;
+                    }
+                }
+                if (isFlanked) break;
+            }
+
+            if (isFlanked) {
+                tokenGroup.forEach(token => token.classList.add('flanked'));
+            }
+        }
+    });
+}
+
+function isAdjacent(token1, token2) {
+    const index1 = parseInt(token1.dataset.index);
+    const index2 = parseInt(token2.dataset.index);
+    const row1 = Math.floor(index1 / 10);
+    const col1 = index1 % 10;
+    const row2 = Math.floor(index2 / 10);
+    const col2 = index2 % 10;
+
+    return Math.abs(row1 - row2) <= 1 && Math.abs(col1 - col2) <= 1;
+}
+
+function checkFlankingLine(flanker1, flanker2, tokenGroup) {
+    const flanker1Index = parseInt(flanker1.dataset.index);
+    const flanker2Index = parseInt(flanker2.dataset.index);
+
+    const flanker1Row = Math.floor(flanker1Index / 10);
+    const flanker1Col = flanker1Index % 10;
+    const flanker2Row = Math.floor(flanker2Index / 10);
+    const flanker2Col = flanker2Index % 10;
+
+    const tokenEdges = {
+        left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
+        right: Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
+        top: Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))),
+        bottom: Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10)))
+    };
+
+    // Check if flankers are on opposite sides (horizontally or vertically)
+    if ((flanker1Col < tokenEdges.left && flanker2Col > tokenEdges.right) ||
+        (flanker2Col < tokenEdges.left && flanker1Col > tokenEdges.right) ||
+        (flanker1Row < tokenEdges.top && flanker2Row > tokenEdges.bottom) ||
+        (flanker2Row < tokenEdges.top && flanker1Row > tokenEdges.bottom)) {
+        return true;
+    }
+
+    // Check diagonal flanking
+    if ((flanker1Row < tokenEdges.top && flanker1Col < tokenEdges.left && flanker2Row > tokenEdges.bottom && flanker2Col > tokenEdges.right) ||
+        (flanker2Row < tokenEdges.top && flanker2Col < tokenEdges.left && flanker1Row > tokenEdges.bottom && flanker1Col > tokenEdges.right) ||
+        (flanker1Row < tokenEdges.top && flanker1Col > tokenEdges.right && flanker2Row > tokenEdges.bottom && flanker2Col < tokenEdges.left) ||
+        (flanker2Row < tokenEdges.top && flanker2Col > tokenEdges.right && flanker1Row > tokenEdges.bottom && flanker1Col < tokenEdges.left)) {
+        return true;
+    }
+
+    return false;
+}
+
+function clearGrid() {
+    grid.querySelectorAll('.cell').forEach(cell => {
+        cell.textContent = '';
+        cell.className = 'cell';
+        delete cell.dataset.groupId;
+    });
+}
+
+placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
+placeEnemyBtn.addEventListener('click', () => placementMode = 'enemy');
+grid.addEventListener('click', placeToken);
+clearGridBtn.addEventListener('click', clearGrid);
 
 document.addEventListener("DOMContentLoaded", function() {
     const tabs = document.querySelectorAll('.tab');
-    
+ 
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', function(event) {
-            const toolNames = ['dc', 'social', 'tracking', 'mystical'];
+            const toolNames = ['dc', 'social', 'tracking', 'mystical', 'flanking'];
             const toolName = toolNames[index];
             openTool(event, toolName);
         });
@@ -424,3 +590,4 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.getElementById("analyzeButton").addEventListener("click", calculateObject);
 });
+
