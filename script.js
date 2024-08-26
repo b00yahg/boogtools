@@ -448,7 +448,6 @@ const placeEnemyBtn = document.getElementById('placeEnemy');
 const tokenSizeSelect = document.getElementById('tokenSize');
 const clearGridBtn = document.getElementById('clearGrid');
 
-// Modify the placeToken function
 function placeToken(event) {
     if (!placementMode) return;
 
@@ -461,20 +460,14 @@ function placeToken(event) {
     const row = Math.floor(index / 10);
     const col = index % 10;
 
-    if (size === 'medium') {
-        cell.textContent = token;
-        cell.classList.add(placementMode);
-        cell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
-    } else {
-        const dimensions = size === 'large' ? 2 : 3;
-        if (col <= 10 - dimensions && row <= 10 - dimensions) {
-            for (let r = row; r < row + dimensions; r++) {
-                for (let c = col; c < col + dimensions; c++) {
-                    const targetCell = grid.children[r * 10 + c];
-                    targetCell.textContent = token;
-                    targetCell.classList.add(placementMode, size);
-                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
-                }
+    const dimensions = size === 'medium' ? 1 : size === 'large' ? 2 : 3;
+    if (col <= 10 - dimensions && row <= 10 - dimensions) {
+        for (let r = row; r < row + dimensions; r++) {
+            for (let c = col; c < col + dimensions; c++) {
+                const targetCell = grid.children[r * 10 + c];
+                targetCell.textContent = token;
+                targetCell.classList.add(placementMode, size);
+                targetCell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
             }
         }
     }
@@ -483,7 +476,40 @@ function placeToken(event) {
     calculateFlanking();
 }
 
-// Modify the calculateFlanking function
+function getTokenInfo(token) {
+    const index = parseInt(token.dataset.index);
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+    let size;
+    if (token.classList.contains('huge')) {
+        size = 3;
+    } else if (token.classList.contains('large')) {
+        size = 2;
+    } else {
+        size = 1;
+    }
+    return { row, col, size };
+}
+
+function checkFlankingLine(flanker1, flanker2, target) {
+    const f1 = getTokenInfo(flanker1);
+    const f2 = getTokenInfo(flanker2);
+    const t = getTokenInfo(target);
+
+    const leftEdge = t.col;
+    const rightEdge = t.col + t.size - 1;
+    const topEdge = t.row;
+    const bottomEdge = t.row + t.size - 1;
+
+    const isOnEdge = (x, y) => 
+        (x === leftEdge || x === rightEdge) && y >= topEdge && y <= bottomEdge ||
+        (y === topEdge || y === bottomEdge) && x >= leftEdge && x <= rightEdge;
+
+    return (isOnEdge(f1.col, f1.row) && isOnEdge(f2.col, f2.row)) &&
+           ((f1.col < leftEdge && f2.col > rightEdge) || (f1.col > rightEdge && f2.col < leftEdge) ||
+            (f1.row < topEdge && f2.row > bottomEdge) || (f1.row > bottomEdge && f2.row < topEdge));
+}
+
 function calculateFlanking() {
     const allTokens = Array.from(grid.getElementsByClassName('ally')).concat(Array.from(grid.getElementsByClassName('enemy')));
     
@@ -502,45 +528,25 @@ function calculateFlanking() {
         const tokenType = tokenGroup[0].classList.contains('ally') ? 'enemy' : 'ally';
         const potentialFlankers = allTokens.filter(t => t.classList.contains(tokenType));
 
-        const adjacentFlankers = potentialFlankers.filter(flanker => 
-            tokenGroup.some(token => isAdjacent(token, flanker))
-        );
-
-        if (adjacentFlankers.length >= 2) {
-            let isFlanked = false;
-            for (let i = 0; i < adjacentFlankers.length - 1; i++) {
-                for (let j = i + 1; j < adjacentFlankers.length; j++) {
-                    if (checkFlankingLine(adjacentFlankers[i], adjacentFlankers[j], tokenGroup)) {
-                        isFlanked = true;
-                        break;
-                    }
+        for (let i = 0; i < potentialFlankers.length - 1; i++) {
+            for (let j = i + 1; j < potentialFlankers.length; j++) {
+                if (checkFlankingLine(potentialFlankers[i], potentialFlankers[j], tokenGroup[0])) {
+                    tokenGroup.forEach(token => token.classList.add('flanked'));
+                    return;  // Stop checking once we find a flanking pair
                 }
-                if (isFlanked) break;
-            }
-
-            if (isFlanked) {
-                tokenGroup.forEach(token => token.classList.add('flanked'));
             }
         }
     });
 }
 
-// Modify the isAdjacent function
 function isAdjacent(token1, token2) {
-    const index1 = parseInt(token1.dataset.index);
-    const index2 = parseInt(token2.dataset.index);
-    const row1 = Math.floor(index1 / 10);
-    const col1 = index1 % 10;
-    const row2 = Math.floor(index2 / 10);
-    const col2 = index2 % 10;
+    const t1 = getTokenInfo(token1);
+    const t2 = getTokenInfo(token2);
 
-    const size1 = token1.classList.contains('huge') ? 3 : token1.classList.contains('large') ? 2 : 1;
-    const size2 = token2.classList.contains('huge') ? 3 : token2.classList.contains('large') ? 2 : 1;
-
-    for (let r1 = row1; r1 < row1 + size1; r1++) {
-        for (let c1 = col1; c1 < col1 + size1; c1++) {
-            for (let r2 = row2; r2 < row2 + size2; r2++) {
-                for (let c2 = col2; c2 < col2 + size2; c2++) {
+    for (let r1 = t1.row; r1 < t1.row + t1.size; r1++) {
+        for (let c1 = t1.col; c1 < t1.col + t1.size; c1++) {
+            for (let r2 = t2.row; r2 < t2.row + t2.size; r2++) {
+                for (let c2 = t2.col; c2 < t2.col + t2.size; c2++) {
                     if (Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1) {
                         return true;
                     }
@@ -548,56 +554,6 @@ function isAdjacent(token1, token2) {
             }
         }
     }
-    return false;
-}
-
-// Modify the checkFlankingLine function
-function checkFlankingLine(flanker1, flanker2, tokenGroup) {
-    const getCenter = (token) => {
-        const index = parseInt(token.dataset.index);
-        const row = Math.floor(index / 10);
-        const col = index % 10;
-        const size = token.classList.contains('huge') ? 3 : token.classList.contains('large') ? 2 : 1;
-        return { 
-            row: row + (size - 1) / 2, 
-            col: col + (size - 1) / 2 
-        };
-    };
-
-    const f1Center = getCenter(flanker1);
-    const f2Center = getCenter(flanker2);
-
-    const targetEdges = {
-        left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
-        right: Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)) + 1,
-        top: Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))),
-        bottom: Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))) + 1
-    };
-
-    // Line equation: y = mx + b
-    const m = (f2Center.row - f1Center.row) / (f2Center.col - f1Center.col);
-    const b = f1Center.row - m * f1Center.col;
-
-    // Check if line passes through opposite corners
-    const topLeft = m * targetEdges.left + b === targetEdges.top;
-    const topRight = m * targetEdges.right + b === targetEdges.top;
-    const bottomLeft = m * targetEdges.left + b === targetEdges.bottom;
-    const bottomRight = m * targetEdges.right + b === targetEdges.bottom;
-
-    if ((topLeft && bottomRight) || (topRight && bottomLeft)) {
-        return true;
-    }
-
-    // Check if line passes through midpoints of opposite sides
-    const leftMid = m * targetEdges.left + b === (targetEdges.top + targetEdges.bottom) / 2;
-    const rightMid = m * targetEdges.right + b === (targetEdges.top + targetEdges.bottom) / 2;
-    const topMid = (targetEdges.top - b) / m === (targetEdges.left + targetEdges.right) / 2;
-    const bottomMid = (targetEdges.bottom - b) / m === (targetEdges.left + targetEdges.right) / 2;
-
-    if ((leftMid && rightMid) || (topMid && bottomMid)) {
-        return true;
-    }
-
     return false;
 }
 
