@@ -418,17 +418,7 @@ const placeEnemyBtn = document.getElementById('placeEnemy');
 const tokenSizeSelect = document.getElementById('tokenSize');
 const clearGridBtn = document.getElementById('clearGrid');
 
-function initializeGrid() {
-    grid.innerHTML = '';
-    for (let i = 0; i < 100; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.index = i;
-        grid.appendChild(cell);
-    }
-}
-
-// Modify the placeToken function to handle different sizes
+// Modify the placeToken function
 function placeToken(event) {
     if (!placementMode) return;
 
@@ -441,34 +431,26 @@ function placeToken(event) {
     const row = Math.floor(index / 10);
     const col = index % 10;
 
-    let cellsToOccupy = [];
-
     if (size === 'medium') {
-        cellsToOccupy = [{row, col}];
-    } else if (size === 'large' && col < 9 && row < 9) {
-        cellsToOccupy = [
-            {row, col}, {row, col: col + 1},
-            {row: row + 1, col}, {row: row + 1, col: col + 1}
-        ];
-    } else if (size === 'huge' && col < 8 && row < 8) {
-        cellsToOccupy = [
-            {row, col}, {row, col: col + 1}, {row, col: col + 2},
-            {row: row + 1, col}, {row: row + 1, col: col + 1}, {row: row + 1, col: col + 2},
-            {row: row + 2, col}, {row: row + 2, col: col + 1}, {row: row + 2, col: col + 2}
-        ];
+        cell.textContent = token;
+        cell.classList.add(placementMode);
+        cell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
+    } else {
+        const dimensions = size === 'large' ? 2 : 3;
+        if (col <= 10 - dimensions && row <= 10 - dimensions) {
+            for (let r = row; r < row + dimensions; r++) {
+                for (let c = col; c < col + dimensions; c++) {
+                    const targetCell = grid.children[r * 10 + c];
+                    targetCell.textContent = token;
+                    targetCell.classList.add(placementMode, size);
+                    targetCell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
+                }
+            }
+        }
     }
 
-    if (cellsToOccupy.length > 0) {
-        const groupId = `${placementMode}-${row}-${col}-${size}`;
-        cellsToOccupy.forEach(({row, col}) => {
-            const targetCell = grid.children[row * 10 + col];
-            targetCell.textContent = token;
-            targetCell.classList.add(placementMode, size);
-            targetCell.dataset.groupId = groupId;
-        });
-        placementMode = null;
-        calculateFlanking();
-    }
+    placementMode = null;
+    calculateFlanking();
 }
 
 // Modify the calculateFlanking function
@@ -513,7 +495,7 @@ function calculateFlanking() {
     });
 }
 
-// Modify the isAdjacent function to handle different sizes
+// Modify the isAdjacent function
 function isAdjacent(token1, token2) {
     const index1 = parseInt(token1.dataset.index);
     const index2 = parseInt(token2.dataset.index);
@@ -539,7 +521,7 @@ function isAdjacent(token1, token2) {
     return false;
 }
 
-// Modify the checkFlankingLine function to handle different sizes
+// Modify the checkFlankingLine function
 function checkFlankingLine(flanker1, flanker2, tokenGroup) {
     const tokenEdges = {
         left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
