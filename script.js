@@ -558,27 +558,47 @@ function checkFlankingLine(flanker1, flanker2, tokenGroup) {
         const row = Math.floor(index / 10);
         const col = index % 10;
         const size = token.classList.contains('huge') ? 3 : token.classList.contains('large') ? 2 : 1;
-        return { row: row + (size - 1) / 2, col: col + (size - 1) / 2 };
-    };
-
-    const targetCenter = {
-        row: (Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))) + 
-              Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10)))) / 2,
-        col: (Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)) + 
-              Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10))) / 2
+        return { 
+            row: row + (size - 1) / 2, 
+            col: col + (size - 1) / 2 
+        };
     };
 
     const f1Center = getCenter(flanker1);
     const f2Center = getCenter(flanker2);
 
-    const isOpposite = (a, b, center) => (a < center && b > center) || (a > center && b < center);
+    const targetEdges = {
+        left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
+        right: Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)) + 1,
+        top: Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))),
+        bottom: Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))) + 1
+    };
 
-    return (isOpposite(f1Center.row, f2Center.row, targetCenter.row) && 
-            Math.abs(f1Center.col - targetCenter.col) <= 1 && 
-            Math.abs(f2Center.col - targetCenter.col) <= 1) ||
-           (isOpposite(f1Center.col, f2Center.col, targetCenter.col) && 
-            Math.abs(f1Center.row - targetCenter.row) <= 1 && 
-            Math.abs(f2Center.row - targetCenter.row) <= 1);
+    // Line equation: y = mx + b
+    const m = (f2Center.row - f1Center.row) / (f2Center.col - f1Center.col);
+    const b = f1Center.row - m * f1Center.col;
+
+    // Check if line passes through opposite corners
+    const topLeft = m * targetEdges.left + b === targetEdges.top;
+    const topRight = m * targetEdges.right + b === targetEdges.top;
+    const bottomLeft = m * targetEdges.left + b === targetEdges.bottom;
+    const bottomRight = m * targetEdges.right + b === targetEdges.bottom;
+
+    if ((topLeft && bottomRight) || (topRight && bottomLeft)) {
+        return true;
+    }
+
+    // Check if line passes through midpoints of opposite sides
+    const leftMid = m * targetEdges.left + b === (targetEdges.top + targetEdges.bottom) / 2;
+    const rightMid = m * targetEdges.right + b === (targetEdges.top + targetEdges.bottom) / 2;
+    const topMid = (targetEdges.top - b) / m === (targetEdges.left + targetEdges.right) / 2;
+    const bottomMid = (targetEdges.bottom - b) / m === (targetEdges.left + targetEdges.right) / 2;
+
+    if ((leftMid && rightMid) || (topMid && bottomMid)) {
+        return true;
+    }
+
+    return false;
 }
 
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
