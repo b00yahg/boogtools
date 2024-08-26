@@ -92,7 +92,6 @@ const objectDatabase = {
     "arrow_slit": { size: "Small", defaultMaterial: "Stone" },
     "battlement": { size: "Large", defaultMaterial: "Stone" },
     "catapult": { size: "Large", defaultMaterial: "Wood" },
-    "portcullis": { size: "Large", defaultMaterial: "Iron" },
     "moat": { size: "Large", defaultMaterial: "Water" },
     "coat_of_arms": { size: "Medium", defaultMaterial: "Wood" },
 
@@ -128,7 +127,6 @@ const objectDatabase = {
     "ballista": { size: "Large", defaultMaterial: "Wood" },
     "sundial": { size: "Medium", defaultMaterial: "Stone" },
     "scarecrow": { size: "Medium", defaultMaterial: "Cloth" },
-    "beehive": { size: "Medium", defaultMaterial: "Wood" },
     "birdcage": { size: "Small", defaultMaterial: "Iron" },
     "wagon_wheel": { size: "Medium", defaultMaterial: "Wood" },
     "gravestone": { size: "Medium", defaultMaterial: "Stone" },
@@ -154,18 +152,12 @@ const objectDatabase = {
     "pulpit": { size: "Large", defaultMaterial: "Wood" },
     "pew": { size: "Large", defaultMaterial: "Wood" },
     "confessional": { size: "Large", defaultMaterial: "Wood" },
-    "sundial": { size: "Medium", defaultMaterial: "Stone" },
-    "weathervane": { size: "Small", defaultMaterial: "Iron" },
     "bell": { size: "Medium", defaultMaterial: "Bronze" },
     "clocktower": { size: "Large", defaultMaterial: "Stone" },
     "battering_ram": { size: "Large", defaultMaterial: "Wood" },
     "siege_tower": { size: "Large", defaultMaterial: "Wood" },
-    "catapult": { size: "Large", defaultMaterial: "Wood" },
-    "ballista": { size: "Large", defaultMaterial: "Wood" },
     "pillory": { size: "Medium", defaultMaterial: "Wood" },
     "gibbet": { size: "Medium", defaultMaterial: "Iron" },
-    "rack": { size: "Large", defaultMaterial: "Wood" },
-    "iron_maiden": { size: "Large", defaultMaterial: "Iron" },
     "thumbscrew": { size: "Tiny", defaultMaterial: "Iron" },
     "branding_iron": { size: "Small", defaultMaterial: "Iron" },
     "ducking_stool": { size: "Large", defaultMaterial: "Wood" },
@@ -306,27 +298,26 @@ function calculateTrackingDC() {
         dc -= 5;
     }
 
-     dc = Math.max(dc, 5);
+    dc = Math.max(dc, 5);
 
-      const result = document.getElementById('trackingResult');
-      result.innerHTML = `<strong>Tracking DC:</strong> ${dc}`;
+    const result = document.getElementById('trackingResult');
+    result.innerHTML = `<strong>Tracking DC:</strong> ${dc}`;
 
-      let difficulty = "Very Easy";
-      if (dc > 30) difficulty = "Nearly Impossible";
-      else if (dc > 25) difficulty = "Very Hard";
-      else if (dc > 20) difficulty = "Hard";
-      else if (dc > 15) difficulty = "Moderate";
-      else if (dc > 10) difficulty = "Easy";
+    let difficulty = "Very Easy";
+    if (dc > 30) difficulty = "Nearly Impossible";
+    else if (dc > 25) difficulty = "Very Hard";
+    else if (dc > 20) difficulty = "Hard";
+    else if (dc > 15) difficulty = "Moderate";
+    else if (dc > 10) difficulty = "Easy";
 
-      result.innerHTML += `<br><strong>Difficulty:</strong> ${difficulty}`;
+    result.innerHTML += `<br><strong>Difficulty:</strong> ${difficulty}`;
 
-      let explanation = `<br><br><strong>Explanation:</strong><br>`;
-     explanation += `Base DC for the surface: ${baseDC}<br>`;
-     if (days > 0) explanation += `Added ${days * 5} for ${days} day(s) passed<br>`;
-     if (trail === 1) explanation += `Subtracted 5 for visible trail<br>`;
-     result.innerHTML += explanation;
- }
-
+    let explanation = `<br><br><strong>Explanation:</strong><br>`;
+    explanation += `Base DC for the surface: ${baseDC}<br>`;
+    if (days > 0) explanation += `Added ${days * 5} for ${days} day(s) passed<br>`;
+    if (trail === 1) explanation += `Subtracted 5 for visible trail<br>`;
+    result.innerHTML += explanation;
+}
 
 function resolveSocialInteraction() {
     const attitude = document.getElementById('attitude').value;
@@ -449,6 +440,7 @@ function calculateObject() {
 function showResult(message) {
     document.getElementById("mysticalResult").innerHTML = message;
 }
+
 let placementMode = null;
 const grid = document.getElementById('grid');
 const placeAllyBtn = document.getElementById('placeAlly');
@@ -561,47 +553,35 @@ function isAdjacent(token1, token2) {
 
 // Modify the checkFlankingLine function
 function checkFlankingLine(flanker1, flanker2, tokenGroup) {
-    const tokenEdges = {
-        left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
-        right: Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
-        top: Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))),
-        bottom: Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10)))
-    };
-
-    const flankers = [flanker1, flanker2];
-    const flankerPositions = flankers.map(flanker => {
-        const index = parseInt(flanker.dataset.index);
+    const getCenter = (token) => {
+        const index = parseInt(token.dataset.index);
         const row = Math.floor(index / 10);
         const col = index % 10;
-        const size = flanker.classList.contains('huge') ? 3 : flanker.classList.contains('large') ? 2 : 1;
-        return { row, col, size };
-    });
+        const size = token.classList.contains('huge') ? 3 : token.classList.contains('large') ? 2 : 1;
+        return { row: row + (size - 1) / 2, col: col + (size - 1) / 2 };
+    };
 
-    // Check if flankers are on opposite sides
-    const isOpposite = (
-        (flankerPositions[0].col + flankerPositions[0].size - 1 < tokenEdges.left && flankerPositions[1].col > tokenEdges.right) ||
-        (flankerPositions[1].col + flankerPositions[1].size - 1 < tokenEdges.left && flankerPositions[0].col > tokenEdges.right) ||
-        (flankerPositions[0].row + flankerPositions[0].size - 1 < tokenEdges.top && flankerPositions[1].row > tokenEdges.bottom) ||
-        (flankerPositions[1].row + flankerPositions[1].size - 1 < tokenEdges.top && flankerPositions[0].row > tokenEdges.bottom)
-    );
+    const targetCenter = {
+        row: (Math.min(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10))) + 
+              Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10)))) / 2,
+        col: (Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)) + 
+              Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10))) / 2
+    };
 
-    // Check diagonal flanking
-    const isDiagonal = (
-        (flankerPositions[0].row <= tokenEdges.top && flankerPositions[0].col <= tokenEdges.left &&
-         flankerPositions[1].row >= tokenEdges.bottom && flankerPositions[1].col >= tokenEdges.right) ||
-        (flankerPositions[1].row <= tokenEdges.top && flankerPositions[1].col <= tokenEdges.left &&
-         flankerPositions[0].row >= tokenEdges.bottom && flankerPositions[0].col >= tokenEdges.right) ||
-        (flankerPositions[0].row <= tokenEdges.top && flankerPositions[0].col >= tokenEdges.right &&
-         flankerPositions[1].row >= tokenEdges.bottom && flankerPositions[1].col <= tokenEdges.left) ||
-        (flankerPositions[1].row <= tokenEdges.top && flankerPositions[1].col >= tokenEdges.right &&
-         flankerPositions[0].row >= tokenEdges.bottom && flankerPositions[0].col <= tokenEdges.left)
-    );
+    const f1Center = getCenter(flanker1);
+    const f2Center = getCenter(flanker2);
 
-    return isOpposite || isDiagonal;
+    const isOpposite = (a, b, center) => (a < center && b > center) || (a > center && b < center);
+
+    return (isOpposite(f1Center.row, f2Center.row, targetCenter.row) && 
+            Math.abs(f1Center.col - targetCenter.col) <= 1 && 
+            Math.abs(f2Center.col - targetCenter.col) <= 1) ||
+           (isOpposite(f1Center.col, f2Center.col, targetCenter.col) && 
+            Math.abs(f1Center.row - targetCenter.row) <= 1 && 
+            Math.abs(f2Center.row - targetCenter.row) <= 1);
 }
 
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
 placeEnemyBtn.addEventListener('click', () => placementMode = 'enemy');
 grid.addEventListener('click', placeToken);
 clearGridBtn.addEventListener('click', initializeGrid);
-
