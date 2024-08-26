@@ -241,14 +241,14 @@ const materialLookup = Object.entries(materialSynonyms).reduce((acc, [key, synon
     return acc;
 }, {});
 
+// Modify the openTool function
 function openTool(evt, toolName) {
-    var i, tools, tabs;
-    tools = document.getElementsByClassName("tool");
-    for (i = 0; i < tools.length; i++) {
+    var tools = document.getElementsByClassName("tool");
+    for (var i = 0; i < tools.length; i++) {
         tools[i].style.display = "none";
     }
-    tabs = document.getElementsByClassName("tab");
-    for (i = 0; i < tabs.length; i++) {
+    var tabs = document.getElementsByClassName("tab");
+    for (var i = 0; i < tabs.length; i++) {
         tabs[i].className = tabs[i].className.replace(" active", "");
     }
     document.getElementById(toolName).style.display = "block";
@@ -256,6 +256,44 @@ function openTool(evt, toolName) {
     if (toolName === 'flanking') {
         initializeGrid();
     }
+}
+
+// Modify the DOMContentLoaded event listener
+document.addEventListener("DOMContentLoaded", function() {
+    const tabs = document.querySelectorAll('.tab');
+    const toolNames = ['dc', 'social', 'tracking', 'mystical', 'flanking'];
+    
+    tabs.forEach((tab, index) => {
+        tab.addEventListener('click', function(event) {
+            openTool(event, toolNames[index]);
+        });
+    });
+
+    // Initialize the first tool (Tracking) as active
+    openTool({ currentTarget: tabs[2] }, 'tracking');
+
+    document.getElementById("analyzeButton").addEventListener("click", calculateObject);
+    
+    // Add event listeners for flanking tool buttons
+    document.getElementById('placeAlly').addEventListener('click', () => placementMode = 'ally');
+    document.getElementById('placeEnemy').addEventListener('click', () => placementMode = 'enemy');
+    document.getElementById('clearGrid').addEventListener('click', initializeGrid);
+    
+    // Initialize the grid
+    initializeGrid();
+});
+
+// Add the initializeGrid function if it's not already present
+function initializeGrid() {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 100; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.index = i;
+        grid.appendChild(cell);
+    }
+    grid.addEventListener('click', placeToken);
 }
 
 function calculateTrackingDC() {
@@ -566,21 +604,4 @@ placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
 placeEnemyBtn.addEventListener('click', () => placementMode = 'enemy');
 grid.addEventListener('click', placeToken);
 clearGridBtn.addEventListener('click', initializeGrid);
-
-document.addEventListener("DOMContentLoaded", function() {
-    const tabs = document.querySelectorAll('.tab');
- 
-    tabs.forEach((tab, index) => {
-        tab.addEventListener('click', function(event) {
-            const toolNames = ['dc', 'social', 'tracking', 'mystical', 'flanking'];
-            const toolName = toolNames[index];
-            openTool(event, toolName);
-            initializeGrid();
-        });
-    });
-
-    openTool({ currentTarget: tabs[0] }, 'tracking');
-
-    document.getElementById("analyzeButton").addEventListener("click", calculateObject);
-});
 
