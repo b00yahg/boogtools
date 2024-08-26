@@ -428,6 +428,7 @@ function initializeGrid() {
     }
 }
 
+// Modify the placeToken function to handle different sizes
 function placeToken(event) {
     if (!placementMode) return;
 
@@ -436,47 +437,48 @@ function placeToken(event) {
 
     const size = tokenSizeSelect.value;
     const token = placementMode === 'ally' ? 'A' : 'E';
+    const index = parseInt(cell.dataset.index);
+    const row = Math.floor(index / 10);
+    const col = index % 10;
+
+    let cellsToOccupy = [];
 
     if (size === 'medium') {
-        cell.textContent = token;
-        cell.classList.add(placementMode);
-    } else {
-        const index = parseInt(cell.dataset.index);
-        const row = Math.floor(index / 10);
-        const col = index % 10;
-
-        if (size === 'large' && col < 9 && row < 9) {
-            for (let r = row; r < row + 2; r++) {
-                for (let c = col; c < col + 2; c++) {
-                    const targetCell = grid.children[r * 10 + c];
-                    targetCell.textContent = token;
-                    targetCell.classList.add(placementMode);
-                }
-            }
-        } else if (size === 'huge' && col < 8 && row < 8) {
-            for (let r = row; r < row + 3; r++) {
-                for (let c = col; c < col + 3; c++) {
-                    const targetCell = grid.children[r * 10 + c];
-                    targetCell.textContent = token;
-                    targetCell.classList.add(placementMode);
-                }
-            }
-        }
+        cellsToOccupy = [{row, col}];
+    } else if (size === 'large' && col < 9 && row < 9) {
+        cellsToOccupy = [
+            {row, col}, {row, col: col + 1},
+            {row: row + 1, col}, {row: row + 1, col: col + 1}
+        ];
+    } else if (size === 'huge' && col < 8 && row < 8) {
+        cellsToOccupy = [
+            {row, col}, {row, col: col + 1}, {row, col: col + 2},
+            {row: row + 1, col}, {row: row + 1, col: col + 1}, {row: row + 1, col: col + 2},
+            {row: row + 2, col}, {row: row + 2, col: col + 1}, {row: row + 2, col: col + 2}
+        ];
     }
 
-    placementMode = null;
-    calculateFlanking();
+    if (cellsToOccupy.length > 0) {
+        const groupId = `${placementMode}-${row}-${col}-${size}`;
+        cellsToOccupy.forEach(({row, col}) => {
+            const targetCell = grid.children[row * 10 + col];
+            targetCell.textContent = token;
+            targetCell.classList.add(placementMode, size);
+            targetCell.dataset.groupId = groupId;
+        });
+        placementMode = null;
+        calculateFlanking();
+    }
 }
 
+// Modify the calculateFlanking function
 function calculateFlanking() {
     const allTokens = Array.from(grid.getElementsByClassName('ally')).concat(Array.from(grid.getElementsByClassName('enemy')));
     
-    // Clear previous flanking
     grid.querySelectorAll('.flanked').forEach(cell => cell.classList.remove('flanked'));
 
-    // Group tokens by their groupId
     const tokenGroups = allTokens.reduce((groups, token) => {
-        const groupId = token.dataset.groupId || token.dataset.index;
+        const groupId = token.dataset.groupId;
         if (!groups[groupId]) {
             groups[groupId] = [];
         }
@@ -492,15 +494,11 @@ function calculateFlanking() {
             tokenGroup.some(token => isAdjacent(token, flanker))
         );
 
-        // Only proceed if there are at least two adjacent flankers
         if (adjacentFlankers.length >= 2) {
             let isFlanked = false;
             for (let i = 0; i < adjacentFlankers.length - 1; i++) {
                 for (let j = i + 1; j < adjacentFlankers.length; j++) {
-                    const flanker1 = adjacentFlankers[i];
-                    const flanker2 = adjacentFlankers[j];
-
-                    if (checkFlankingLine(flanker1, flanker2, tokenGroup)) {
+                    if (checkFlankingLine(adjacentFlankers[i], adjacentFlankers[j], tokenGroup)) {
                         isFlanked = true;
                         break;
                     }
@@ -515,6 +513,7 @@ function calculateFlanking() {
     });
 }
 
+// Modify the isAdjacent function to handle different sizes
 function isAdjacent(token1, token2) {
     const index1 = parseInt(token1.dataset.index);
     const index2 = parseInt(token2.dataset.index);
@@ -523,18 +522,25 @@ function isAdjacent(token1, token2) {
     const row2 = Math.floor(index2 / 10);
     const col2 = index2 % 10;
 
-    return Math.abs(row1 - row2) <= 1 && Math.abs(col1 - col2) <= 1;
+    const size1 = token1.classList.contains('huge') ? 3 : token1.classList.contains('large') ? 2 : 1;
+    const size2 = token2.classList.contains('huge') ? 3 : token2.classList.contains('large') ? 2 : 1;
+
+    for (let r1 = row1; r1 < row1 + size1; r1++) {
+        for (let c1 = col1; c1 < col1 + size1; c1++) {
+            for (let r2 = row2; r2 < row2 + size2; r2++) {
+                for (let c2 = col2; c2 < col2 + size2; c2++) {
+                    if (Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
+// Modify the checkFlankingLine function to handle different sizes
 function checkFlankingLine(flanker1, flanker2, tokenGroup) {
-    const flanker1Index = parseInt(flanker1.dataset.index);
-    const flanker2Index = parseInt(flanker2.dataset.index);
-
-    const flanker1Row = Math.floor(flanker1Index / 10);
-    const flanker1Col = flanker1Index % 10;
-    const flanker2Row = Math.floor(flanker2Index / 10);
-    const flanker2Col = flanker2Index % 10;
-
     const tokenEdges = {
         left: Math.min(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
         right: Math.max(...tokenGroup.map(t => parseInt(t.dataset.index) % 10)),
@@ -542,30 +548,36 @@ function checkFlankingLine(flanker1, flanker2, tokenGroup) {
         bottom: Math.max(...tokenGroup.map(t => Math.floor(parseInt(t.dataset.index) / 10)))
     };
 
-    // Check if flankers are on opposite sides (horizontally or vertically)
-    if ((flanker1Col < tokenEdges.left && flanker2Col > tokenEdges.right) ||
-        (flanker2Col < tokenEdges.left && flanker1Col > tokenEdges.right) ||
-        (flanker1Row < tokenEdges.top && flanker2Row > tokenEdges.bottom) ||
-        (flanker2Row < tokenEdges.top && flanker1Row > tokenEdges.bottom)) {
-        return true;
-    }
+    const flankers = [flanker1, flanker2];
+    const flankerPositions = flankers.map(flanker => {
+        const index = parseInt(flanker.dataset.index);
+        const row = Math.floor(index / 10);
+        const col = index % 10;
+        const size = flanker.classList.contains('huge') ? 3 : flanker.classList.contains('large') ? 2 : 1;
+        return { row, col, size };
+    });
+
+    // Check if flankers are on opposite sides
+    const isOpposite = (
+        (flankerPositions[0].col + flankerPositions[0].size - 1 < tokenEdges.left && flankerPositions[1].col > tokenEdges.right) ||
+        (flankerPositions[1].col + flankerPositions[1].size - 1 < tokenEdges.left && flankerPositions[0].col > tokenEdges.right) ||
+        (flankerPositions[0].row + flankerPositions[0].size - 1 < tokenEdges.top && flankerPositions[1].row > tokenEdges.bottom) ||
+        (flankerPositions[1].row + flankerPositions[1].size - 1 < tokenEdges.top && flankerPositions[0].row > tokenEdges.bottom)
+    );
 
     // Check diagonal flanking
-    if ((flanker1Row <= tokenEdges.top && flanker1Col <= tokenEdges.left && flanker2Row >= tokenEdges.bottom && flanker2Col >= tokenEdges.right) ||
-        (flanker2Row <= tokenEdges.top && flanker2Col <= tokenEdges.left && flanker1Row >= tokenEdges.bottom && flanker1Col >= tokenEdges.right) ||
-        (flanker1Row <= tokenEdges.top && flanker1Col >= tokenEdges.right && flanker2Row >= tokenEdges.bottom && flanker2Col <= tokenEdges.left) ||
-        (flanker2Row <= tokenEdges.top && flanker2Col >= tokenEdges.right && flanker1Row >= tokenEdges.bottom && flanker1Col <= tokenEdges.left)) {
-        return true;
-    }
+    const isDiagonal = (
+        (flankerPositions[0].row <= tokenEdges.top && flankerPositions[0].col <= tokenEdges.left &&
+         flankerPositions[1].row >= tokenEdges.bottom && flankerPositions[1].col >= tokenEdges.right) ||
+        (flankerPositions[1].row <= tokenEdges.top && flankerPositions[1].col <= tokenEdges.left &&
+         flankerPositions[0].row >= tokenEdges.bottom && flankerPositions[0].col >= tokenEdges.right) ||
+        (flankerPositions[0].row <= tokenEdges.top && flankerPositions[0].col >= tokenEdges.right &&
+         flankerPositions[1].row >= tokenEdges.bottom && flankerPositions[1].col <= tokenEdges.left) ||
+        (flankerPositions[1].row <= tokenEdges.top && flankerPositions[1].col >= tokenEdges.right &&
+         flankerPositions[0].row >= tokenEdges.bottom && flankerPositions[0].col <= tokenEdges.left)
+    );
 
-    return false;
-}
-function clearGrid() {
-    grid.querySelectorAll('.cell').forEach(cell => {
-        cell.textContent = '';
-        cell.className = 'cell';
-        delete cell.dataset.groupId;
-    });
+    return isOpposite || isDiagonal;
 }
 
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
