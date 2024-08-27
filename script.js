@@ -504,7 +504,25 @@ function getTokenInfo(token) {
   const col = index % GRID_SIZE;
   const size = token.classList.contains('huge') ? 3 : 
                token.classList.contains('large') ? 2 : 1;
-  return { row, col, size };
+  return {
+    row,
+    col,
+    size,
+    centerX: col + size / 2 - 0.5,
+    centerY: row + size / 2 - 0.5
+  };
+}
+
+// Check if a point is on the edge of a token
+function isOnEdge(point, token) {
+  const { row, col, size } = token;
+  const epsilon = 0.001; // Small value to account for floating-point precision
+  return (
+    (Math.abs(point.x - (col - 0.5)) < epsilon && point.y >= row - 0.5 && point.y <= row + size - 0.5) ||
+    (Math.abs(point.x - (col + size - 0.5)) < epsilon && point.y >= row - 0.5 && point.y <= row + size - 0.5) ||
+    (Math.abs(point.y - (row - 0.5)) < epsilon && point.x >= col - 0.5 && point.x <= col + size - 0.5) ||
+    (Math.abs(point.y - (row + size - 0.5)) < epsilon && point.x >= col - 0.5 && point.x <= col + size - 0.5)
+  );
 }
 
 // Check if two tokens are flanking a target
@@ -513,39 +531,16 @@ function areFlanking(token1, token2, target) {
   const t2 = getTokenInfo(token2);
   const tgt = getTokenInfo(target);
 
-  // Calculate center points
-  const center1 = {
-    x: t1.col + t1.size / 2 - 0.5,
-    y: t1.row + t1.size / 2 - 0.5
-  };
-  const center2 = {
-    x: t2.col + t2.size / 2 - 0.5,
-    y: t2.row + t2.size / 2 - 0.5
-  };
+  // Check if tokens are on opposite sides
+  const onOppositeSides =
+    (isOnEdge({ x: t1.centerX, y: t1.centerY }, tgt) &&
+     isOnEdge({ x: t2.centerX, y: t2.centerY }, tgt)) &&
+    ((t1.centerX < tgt.col && t2.centerX > tgt.col + tgt.size - 1) ||
+     (t1.centerX > tgt.col + tgt.size - 1 && t2.centerX < tgt.col) ||
+     (t1.centerY < tgt.row && t2.centerY > tgt.row + tgt.size - 1) ||
+     (t1.centerY > tgt.row + tgt.size - 1 && t2.centerY < tgt.row));
 
-  // Check if the line between centers passes through opposite sides or corners
-  const leftEdge = tgt.col - 0.5;
-  const rightEdge = tgt.col + tgt.size - 0.5;
-  const topEdge = tgt.row - 0.5;
-  const bottomEdge = tgt.row + tgt.size - 0.5;
-
-  // Line equation: y = mx + b
-  const m = (center2.y - center1.y) / (center2.x - center1.x);
-  const b = center1.y - m * center1.x;
-
-  // Check intersections with target edges
-  const leftIntersect = m * leftEdge + b;
-  const rightIntersect = m * rightEdge + b;
-  const topIntersect = (topEdge - b) / m;
-  const bottomIntersect = (bottomEdge - b) / m;
-
-  const passesThrough =
-    (leftIntersect >= topEdge && leftIntersect <= bottomEdge &&
-     rightIntersect >= topEdge && rightIntersect <= bottomEdge) ||
-    (topIntersect >= leftEdge && topIntersect <= rightEdge &&
-     bottomIntersect >= leftEdge && bottomIntersect <= rightEdge);
-
-  return passesThrough;
+  return onOppositeSides;
 }
 
 // Calculate flanking for all tokens
@@ -571,9 +566,10 @@ function calculateFlanking() {
       for (let j = i + 1; j < potentialFlankers.length; j++) {
         if (areFlanking(potentialFlankers[i], potentialFlankers[j], tokenGroup[0])) {
           tokenGroup.forEach(token => token.classList.add('flanked'));
-          return;  // Stop checking once we find a flanking pair
+          break;
         }
       }
+      if (tokenGroup[0].classList.contains('flanked')) break;
     }
   });
 }
