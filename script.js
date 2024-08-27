@@ -497,7 +497,8 @@ function placeToken(event) {
   calculateFlanking();
 }
 
-// Get token information
+// ... (keep the existing constants and DOM elements)
+
 function getTokenInfo(token) {
   const index = parseInt(token.dataset.index);
   const row = Math.floor(index / GRID_SIZE);
@@ -513,37 +514,44 @@ function getTokenInfo(token) {
   };
 }
 
-// Check if a point is on the edge of a token
-function isOnEdge(point, token) {
-  const { row, col, size } = token;
-  const epsilon = 0.001; // Small value to account for floating-point precision
+function lineIntersectsSquare(x1, y1, x2, y2, squareX, squareY, squareSize) {
+  const left = squareX - 0.5;
+  const right = squareX + squareSize - 0.5;
+  const top = squareY - 0.5;
+  const bottom = squareY + squareSize - 0.5;
+
+  // Check intersection with each side of the square
   return (
-    (Math.abs(point.x - (col - 0.5)) < epsilon && point.y >= row - 0.5 && point.y <= row + size - 0.5) ||
-    (Math.abs(point.x - (col + size - 0.5)) < epsilon && point.y >= row - 0.5 && point.y <= row + size - 0.5) ||
-    (Math.abs(point.y - (row - 0.5)) < epsilon && point.x >= col - 0.5 && point.x <= col + size - 0.5) ||
-    (Math.abs(point.y - (row + size - 0.5)) < epsilon && point.x >= col - 0.5 && point.x <= col + size - 0.5)
+    (y1 <= top && y2 >= bottom || y1 >= bottom && y2 <= top) && 
+    (x1 + (top - y1) * (x2 - x1) / (y2 - y1) >= left && 
+     x1 + (top - y1) * (x2 - x1) / (y2 - y1) <= right)
+  ) || (
+    (y1 <= bottom && y2 >= top || y1 >= top && y2 <= bottom) && 
+    (x1 + (bottom - y1) * (x2 - x1) / (y2 - y1) >= left && 
+     x1 + (bottom - y1) * (x2 - x1) / (y2 - y1) <= right)
+  ) || (
+    (x1 <= left && x2 >= right || x1 >= right && x2 <= left) && 
+    (y1 + (left - x1) * (y2 - y1) / (x2 - x1) >= top && 
+     y1 + (left - x1) * (y2 - y1) / (x2 - x1) <= bottom)
+  ) || (
+    (x1 <= right && x2 >= left || x1 >= left && x2 <= right) && 
+    (y1 + (right - x1) * (y2 - y1) / (x2 - x1) >= top && 
+     y1 + (right - x1) * (y2 - y1) / (x2 - x1) <= bottom)
   );
 }
 
-// Check if two tokens are flanking a target
 function areFlanking(token1, token2, target) {
   const t1 = getTokenInfo(token1);
   const t2 = getTokenInfo(token2);
   const tgt = getTokenInfo(target);
 
-  // Check if tokens are on opposite sides
-  const onOppositeSides =
-    (isOnEdge({ x: t1.centerX, y: t1.centerY }, tgt) &&
-     isOnEdge({ x: t2.centerX, y: t2.centerY }, tgt)) &&
-    ((t1.centerX < tgt.col && t2.centerX > tgt.col + tgt.size - 1) ||
-     (t1.centerX > tgt.col + tgt.size - 1 && t2.centerX < tgt.col) ||
-     (t1.centerY < tgt.row && t2.centerY > tgt.row + tgt.size - 1) ||
-     (t1.centerY > tgt.row + tgt.size - 1 && t2.centerY < tgt.row));
-
-  return onOppositeSides;
+  // Check if the line between centers intersects opposite sides of the target
+  return (
+    lineIntersectsSquare(t1.centerX, t1.centerY, t2.centerX, t2.centerY, tgt.col, tgt.row, tgt.size) &&
+    !lineIntersectsSquare(t1.centerX, t1.centerY, t2.centerX, t2.centerY, tgt.col + 0.5, tgt.row + 0.5, tgt.size - 1)
+  );
 }
 
-// Calculate flanking for all tokens
 function calculateFlanking() {
   const allTokens = Array.from(grid.querySelectorAll('.ally, .enemy'));
   
@@ -566,13 +574,14 @@ function calculateFlanking() {
       for (let j = i + 1; j < potentialFlankers.length; j++) {
         if (areFlanking(potentialFlankers[i], potentialFlankers[j], tokenGroup[0])) {
           tokenGroup.forEach(token => token.classList.add('flanked'));
-          break;
+          return;  // Exit once we find a flanking pair
         }
       }
-      if (tokenGroup[0].classList.contains('flanked')) break;
     }
   });
 }
+
+// ... (keep the existing event listeners and initialization)
 
 // Event Listeners
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
