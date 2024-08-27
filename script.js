@@ -441,123 +441,148 @@ function showResult(message) {
     document.getElementById("mysticalResult").innerHTML = message;
 }
 
-let placementMode = null;
+// Constants
+const GRID_SIZE = 10;
+const TOKEN_SIZES = {
+  medium: 1,
+  large: 2,
+  huge: 3
+};
+
+// DOM Elements
 const grid = document.getElementById('grid');
 const placeAllyBtn = document.getElementById('placeAlly');
 const placeEnemyBtn = document.getElementById('placeEnemy');
 const tokenSizeSelect = document.getElementById('tokenSize');
 const clearGridBtn = document.getElementById('clearGrid');
 
+let placementMode = null;
+
+// Initialize grid
+function initializeGrid() {
+  grid.innerHTML = '';
+  for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    grid.appendChild(cell);
+  }
+}
+
+// Place token on the grid
 function placeToken(event) {
-    if (!placementMode) return;
+  if (!placementMode) return;
 
-    const cell = event.target;
-    if (!cell.classList.contains('cell')) return;
+  const cell = event.target;
+  if (!cell.classList.contains('cell')) return;
 
-    const size = tokenSizeSelect.value;
-    const token = placementMode === 'ally' ? 'A' : 'E';
-    const index = parseInt(cell.dataset.index);
-    const row = Math.floor(index / 10);
-    const col = index % 10;
+  const size = TOKEN_SIZES[tokenSizeSelect.value];
+  const token = placementMode === 'ally' ? 'A' : 'E';
+  const index = parseInt(cell.dataset.index);
+  const row = Math.floor(index / GRID_SIZE);
+  const col = index % GRID_SIZE;
 
-    const dimensions = size === 'medium' ? 1 : size === 'large' ? 2 : 3;
-    if (col <= 10 - dimensions && row <= 10 - dimensions) {
-        for (let r = row; r < row + dimensions; r++) {
-            for (let c = col; c < col + dimensions; c++) {
-                const targetCell = grid.children[r * 10 + c];
-                targetCell.textContent = token;
-                targetCell.classList.add(placementMode, size);
-                targetCell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
-            }
-        }
+  if (col <= GRID_SIZE - size && row <= GRID_SIZE - size) {
+    for (let r = row; r < row + size; r++) {
+      for (let c = col; c < col + size; c++) {
+        const targetCell = grid.children[r * GRID_SIZE + c];
+        targetCell.textContent = token;
+        targetCell.className = `cell ${placementMode} ${tokenSizeSelect.value}`;
+        targetCell.dataset.groupId = `${placementMode}-${row}-${col}-${size}`;
+      }
     }
+  }
 
-    placementMode = null;
-    calculateFlanking();
+  placementMode = null;
+  calculateFlanking();
 }
 
+// Get token information
 function getTokenInfo(token) {
-    const index = parseInt(token.dataset.index);
-    const row = Math.floor(index / 10);
-    const col = index % 10;
-    let size;
-    if (token.classList.contains('huge')) {
-        size = 3;
-    } else if (token.classList.contains('large')) {
-        size = 2;
-    } else {
-        size = 1;
-    }
-    return { row, col, size };
+  const index = parseInt(token.dataset.index);
+  const row = Math.floor(index / GRID_SIZE);
+  const col = index % GRID_SIZE;
+  const size = token.classList.contains('huge') ? 3 : 
+               token.classList.contains('large') ? 2 : 1;
+  return { row, col, size };
 }
 
-function checkFlankingLine(flanker1, flanker2, target) {
-    const f1 = getTokenInfo(flanker1);
-    const f2 = getTokenInfo(flanker2);
-    const t = getTokenInfo(target);
+// Check if two tokens are flanking a target
+function areFlanking(token1, token2, target) {
+  const t1 = getTokenInfo(token1);
+  const t2 = getTokenInfo(token2);
+  const tgt = getTokenInfo(target);
 
-    const leftEdge = t.col;
-    const rightEdge = t.col + t.size - 1;
-    const topEdge = t.row;
-    const bottomEdge = t.row + t.size - 1;
+  // Calculate center points
+  const center1 = {
+    x: t1.col + t1.size / 2 - 0.5,
+    y: t1.row + t1.size / 2 - 0.5
+  };
+  const center2 = {
+    x: t2.col + t2.size / 2 - 0.5,
+    y: t2.row + t2.size / 2 - 0.5
+  };
 
-    const isOnEdge = (x, y) => 
-        (x === leftEdge || x === rightEdge) && y >= topEdge && y <= bottomEdge ||
-        (y === topEdge || y === bottomEdge) && x >= leftEdge && x <= rightEdge;
+  // Check if the line between centers passes through opposite sides or corners
+  const leftEdge = tgt.col - 0.5;
+  const rightEdge = tgt.col + tgt.size - 0.5;
+  const topEdge = tgt.row - 0.5;
+  const bottomEdge = tgt.row + tgt.size - 0.5;
 
-    return (isOnEdge(f1.col, f1.row) && isOnEdge(f2.col, f2.row)) &&
-           ((f1.col < leftEdge && f2.col > rightEdge) || (f1.col > rightEdge && f2.col < leftEdge) ||
-            (f1.row < topEdge && f2.row > bottomEdge) || (f1.row > bottomEdge && f2.row < topEdge));
+  // Line equation: y = mx + b
+  const m = (center2.y - center1.y) / (center2.x - center1.x);
+  const b = center1.y - m * center1.x;
+
+  // Check intersections with target edges
+  const leftIntersect = m * leftEdge + b;
+  const rightIntersect = m * rightEdge + b;
+  const topIntersect = (topEdge - b) / m;
+  const bottomIntersect = (bottomEdge - b) / m;
+
+  const passesThrough =
+    (leftIntersect >= topEdge && leftIntersect <= bottomEdge &&
+     rightIntersect >= topEdge && rightIntersect <= bottomEdge) ||
+    (topIntersect >= leftEdge && topIntersect <= rightEdge &&
+     bottomIntersect >= leftEdge && bottomIntersect <= rightEdge);
+
+  return passesThrough;
 }
 
+// Calculate flanking for all tokens
 function calculateFlanking() {
-    const allTokens = Array.from(grid.getElementsByClassName('ally')).concat(Array.from(grid.getElementsByClassName('enemy')));
-    
-    grid.querySelectorAll('.flanked').forEach(cell => cell.classList.remove('flanked'));
+  const allTokens = Array.from(grid.querySelectorAll('.ally, .enemy'));
+  
+  grid.querySelectorAll('.flanked').forEach(cell => cell.classList.remove('flanked'));
 
-    const tokenGroups = allTokens.reduce((groups, token) => {
-        const groupId = token.dataset.groupId;
-        if (!groups[groupId]) {
-            groups[groupId] = [];
-        }
-        groups[groupId].push(token);
-        return groups;
-    }, {});
-
-    Object.values(tokenGroups).forEach(tokenGroup => {
-        const tokenType = tokenGroup[0].classList.contains('ally') ? 'enemy' : 'ally';
-        const potentialFlankers = allTokens.filter(t => t.classList.contains(tokenType));
-
-        for (let i = 0; i < potentialFlankers.length - 1; i++) {
-            for (let j = i + 1; j < potentialFlankers.length; j++) {
-                if (checkFlankingLine(potentialFlankers[i], potentialFlankers[j], tokenGroup[0])) {
-                    tokenGroup.forEach(token => token.classList.add('flanked'));
-                    return;  // Stop checking once we find a flanking pair
-                }
-            }
-        }
-    });
-}
-
-function isAdjacent(token1, token2) {
-    const t1 = getTokenInfo(token1);
-    const t2 = getTokenInfo(token2);
-
-    for (let r1 = t1.row; r1 < t1.row + t1.size; r1++) {
-        for (let c1 = t1.col; c1 < t1.col + t1.size; c1++) {
-            for (let r2 = t2.row; r2 < t2.row + t2.size; r2++) {
-                for (let c2 = t2.col; c2 < t2.col + t2.size; c2++) {
-                    if (Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1) {
-                        return true;
-                    }
-                }
-            }
-        }
+  const tokenGroups = allTokens.reduce((groups, token) => {
+    const groupId = token.dataset.groupId;
+    if (!groups[groupId]) {
+      groups[groupId] = [];
     }
-    return false;
+    groups[groupId].push(token);
+    return groups;
+  }, {});
+
+  Object.values(tokenGroups).forEach(tokenGroup => {
+    const tokenType = tokenGroup[0].classList.contains('ally') ? 'enemy' : 'ally';
+    const potentialFlankers = allTokens.filter(t => t.classList.contains(tokenType));
+
+    for (let i = 0; i < potentialFlankers.length - 1; i++) {
+      for (let j = i + 1; j < potentialFlankers.length; j++) {
+        if (areFlanking(potentialFlankers[i], potentialFlankers[j], tokenGroup[0])) {
+          tokenGroup.forEach(token => token.classList.add('flanked'));
+          return;  // Stop checking once we find a flanking pair
+        }
+      }
+    }
+  });
 }
 
+// Event Listeners
 placeAllyBtn.addEventListener('click', () => placementMode = 'ally');
 placeEnemyBtn.addEventListener('click', () => placementMode = 'enemy');
 grid.addEventListener('click', placeToken);
 clearGridBtn.addEventListener('click', initializeGrid);
+
+// Initialize the grid on load
+initializeGrid();
